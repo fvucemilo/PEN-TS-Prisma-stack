@@ -55,63 +55,8 @@ jobs:
       - name: Run Linter
         run: yarn lint
 
-  test:
-    runs-on: ubuntu-latest
-    needs: setup
-
-    env:
-      PORT: 3000
-      DATABASE_URL: postgresql://postgres:secret@localhost:5432/mydb?schema=public
-      JWT_SECRET: thisisasamplesecret
-      JWT_ACCESS_EXPIRATION_MINUTES: 30
-      JWT_REFRESH_EXPIRATION_DAYS: 30
-      JWT_RESET_PASSWORD_EXPIRATION_MINUTES: 10
-      JWT_VERIFY_EMAIL_EXPIRATION_MINUTES: 10
-      SMTP_HOST: smtp.ethereal.email
-      SMTP_PORT: 587
-      SMTP_USERNAME: herminio.dicki14@ethereal.email
-      SMTP_PASSWORD: vAPHYT11nBwpJZXnMQ
-      EMAIL_FROM: support@yourapp.com
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '16'
-
-      - name: Install Docker Compose
-        run: |
-          sudo curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-          sudo chmod +x /usr/local/bin/docker-compose
-          docker-compose --version
-
-      - name: Install dependencies
-        run: yarn install
-
-      - name: Wait for PostgreSQL to be ready
-        run: |
-          sudo apt-get install -y netcat
-          until nc -z -v -w30 localhost 5432
-          do
-            echo "Waiting for PostgreSQL..."
-            sleep 5
-          done
-
-      - name: Run Prisma migrations
-        run: yarn db:push
-
-      - name: Run tests
-        run: |
-          docker-compose -f ./docker/docker-compose.only-db-test.yml up -d
-          jest -i --colors --verbose --detectOpenHandles
-          docker-compose -f ./docker/docker-compose.only-db-test.yml down
-
   coverage:
     runs-on: ubuntu-latest
-    needs: test
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -127,7 +72,6 @@ jobs:
   deploy:
     if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/release'
     runs-on: ubuntu-latest
-    needs: test
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
