@@ -76,8 +76,14 @@ jobs:
       - name: Install dependencies
         run: yarn install
 
-      - name: Set up PostgreSQL connection string
-        run: echo "DATABASE_URL=postgresql://postgres:secret@localhost:5432/mydb" >> .env
+      - name: Wait for PostgreSQL to be ready
+        run: |
+          sudo apt-get install -y netcat
+          until nc -z -v -w30 localhost 5432
+          do
+            echo "Waiting for PostgreSQL..."
+            sleep 5
+          done
 
       - name: Run Prisma migrations
         run: yarn db:push
