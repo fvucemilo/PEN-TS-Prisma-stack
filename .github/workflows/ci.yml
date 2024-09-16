@@ -1,0 +1,109 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches:
+      - main
+      - development
+      - release
+  pull_request:
+    branches:
+      - main
+      - development
+      - release
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '12'
+
+      - name: Cache Node.js dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            node_modules
+            ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json', '**/yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      - name: Install dependencies
+        run: yarn install
+
+  lint:
+    runs-on: ubuntu-latest
+    needs: setup
+    steps:
+      - name: Run Linter
+        run: yarn lint
+
+  test:
+    runs-on: ubuntu-latest
+    needs: setup
+    services:
+      postgres:
+        image: postgres:latest
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: secret
+          POSTGRES_DB: mydb
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '12'
+
+      - name: Install dependencies
+        run: yarn install
+
+      - name: Set up PostgreSQL connection string
+        run: echo "DATABASE_URL=postgresql://postgres:secret@localhost:5432/mydb" >> .env
+
+      - name: Run Prisma migrations
+        run: yarn db:push
+
+      - name: Run tests
+        run: yarn test
+
+  coverage:
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Install dependencies
+        run: yarn install
+
+      - name: Run coverage and send to Coveralls
+        env:
+          COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
+        run: yarn coverage:coveralls
+
+  deploy:
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/release'
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Deploy to production
+        run: echo "Deploying to production..."

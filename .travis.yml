@@ -1,0 +1,31 @@
+language: node_js
+node_js:
+  - '12'
+
+services:
+  - docker
+
+before_script:
+  - docker-compose up -d
+
+env:
+  global:
+    - PORT=3000
+    - DATABASE_URL="postgresql://postgres:secret@localhost:5432/mydb?schema=public"
+    - JWT_SECRET=thisisasamplesecret
+    - JWT_ACCESS_EXPIRATION_MINUTES=30
+    - JWT_REFRESH_EXPIRATION_DAYS=30
+    - JWT_RESET_PASSWORD_EXPIRATION_MINUTES=10
+    - JWT_VERIFY_EMAIL_EXPIRATION_MINUTES=10
+    - SMTP_HOST=email-server
+    - SMTP_PORT=587
+    - SMTP_USERNAME=email-server-username
+    - SMTP_PASSWORD=email-server-password
+    - EMAIL_FROM=support@yourapp.com
+
+script:
+  - yarn lint
+  - yarn test
+
+after_success:
+  - yarn coverage:coveralls
