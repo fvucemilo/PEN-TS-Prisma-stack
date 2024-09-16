@@ -73,6 +73,20 @@ jobs:
           --health-timeout 5s
           --health-retries 5
 
+    env:
+      PORT: 3000
+      DATABASE_URL: postgresql://postgres:secret@localhost:5432/mydb?schema=public
+      JWT_SECRET: thisisasamplesecret
+      JWT_ACCESS_EXPIRATION_MINUTES: 30
+      JWT_REFRESH_EXPIRATION_DAYS: 30
+      JWT_RESET_PASSWORD_EXPIRATION_MINUTES: 10
+      JWT_VERIFY_EMAIL_EXPIRATION_MINUTES: 10
+      SMTP_HOST: smtp.ethereal.email
+      SMTP_PORT: 587
+      SMTP_USERNAME: herminio.dicki14@ethereal.email
+      SMTP_PASSWORD: vAPHYT11nBwpJZXnMQ
+      EMAIL_FROM: support@yourapp.com
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
