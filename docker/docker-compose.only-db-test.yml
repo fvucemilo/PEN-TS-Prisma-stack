@@ -1,5 +1,5 @@
 version: '3.8'
-name: PEN-TS-Prisma-stack-only-db-test
+
 services:
   db:
     image: postgres
